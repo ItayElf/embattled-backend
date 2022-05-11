@@ -20,6 +20,7 @@ class Unit:
     armor: int
     morale_max: int
     morale: int
+    speed: int
     defense: int
     melee_attack: int
     melee_damage: int
@@ -35,10 +36,10 @@ class Unit:
     def from_data(cls, unit_data: UnitData):
         """Returns a unit object from datasheet"""
         return cls(unit_data.name, unit_data.description, unit_data.clas, unit_data.unit_size, unit_data.unit_size,
-                   unit_data.hitpoints, unit_data.armor, unit_data.morale, unit_data.morale, unit_data.defense,
-                   unit_data.melee_attack, unit_data.melee_damage, unit_data.charge_bonus, unit_data.ammunition,
-                   unit_data.ammunition, unit_data.range, unit_data.ranged_attack, unit_data.ranged_damage,
-                   [Attribute.from_model(a) for a in unit_data.attributes])
+                   unit_data.hitpoints, unit_data.armor, unit_data.morale, unit_data.morale, unit_data.speed,
+                   unit_data.defense, unit_data.melee_attack, unit_data.melee_damage, unit_data.charge_bonus,
+                   unit_data.ammunition, unit_data.ammunition, unit_data.range, unit_data.ranged_attack,
+                   unit_data.ranged_damage, [Attribute.from_model(a) for a in unit_data.attributes])
 
     @property
     def is_ranged(self):

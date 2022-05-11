@@ -12,6 +12,7 @@ class UnitData(db.Model):
     hitpoints = db.Column(db.Integer, nullable=False)
     armor = db.Column(db.Integer, nullable=False)
     morale = db.Column(db.Integer, nullable=False)
+    speed = db.Column(db.Integer, nullable=False)
     defense = db.Column(db.Integer, nullable=False)
     melee_attack = db.Column(db.Integer, nullable=False)
     melee_damage = db.Column(db.Integer, nullable=False)
