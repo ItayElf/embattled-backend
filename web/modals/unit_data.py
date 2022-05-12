@@ -1,6 +1,5 @@
 from web.base import db
-from web.tables import units_keywords
-from web.tables.units_attributes import units_attributes
+from web.tables import units_keywords, units_attributes
 
 
 class UnitData(db.Model):

@@ -1,5 +1,6 @@
-from web.base import app, db
 from web import *
+from web.base import app
+from web.api import *
 
 
 def main():
