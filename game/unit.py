@@ -12,7 +12,6 @@ from web import UnitData
 @dataclass
 class Unit:
     name: str
-    description: str
     clas: str
     unit_size_max: int
     unit_size: int
@@ -31,15 +30,17 @@ class Unit:
     ranged_attack: int | None
     ranged_damage: int | None
     attributes: list[Attribute]
+    keywords: list[str]
 
     @classmethod
     def from_data(cls, unit_data: UnitData):
         """Returns a unit object from datasheet"""
-        return cls(unit_data.name, unit_data.description, unit_data.clas, unit_data.unit_size, unit_data.unit_size,
+        return cls(unit_data.name, unit_data.clas, unit_data.unit_size, unit_data.unit_size,
                    unit_data.hitpoints, unit_data.armor, unit_data.morale, unit_data.morale, unit_data.speed,
                    unit_data.defense, unit_data.melee_attack, unit_data.melee_damage, unit_data.charge_bonus,
                    unit_data.ammunition, unit_data.ammunition, unit_data.range, unit_data.ranged_attack,
-                   unit_data.ranged_damage, [Attribute.from_model(a) for a in unit_data.attributes])
+                   unit_data.ranged_damage, [Attribute.from_model(a) for a in unit_data.attributes],
+                   [a.name for a in unit_data.keywords])
 
     @property
     def is_ranged(self):
