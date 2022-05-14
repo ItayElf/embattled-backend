@@ -5,9 +5,9 @@ class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
     mode_id = db.Column(db.Integer, db.ForeignKey("mode.id"), nullable=False)
-    mode = db.relationship("Mode", backref="rooms")
+    mode = db.relationship("Mode")
     host_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    host = db.relationship("User", backref="rooms")
+    host = db.relationship("User")
     room_hash = db.Column(db.String, unique=True, nullable=False)
 
     @property
