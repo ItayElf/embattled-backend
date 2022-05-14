@@ -52,3 +52,13 @@ def auth_refresh():
     identity = get_jwt_identity()
     token = create_access_token(identity=identity)
     return jsonify(access_token=token)
+
+
+@app.route("/api/auth/current_user")
+@jwt_required()
+def auth_current_user():
+    identity = get_jwt_identity()
+    user = User.query.filter_by(email=identity).first()
+    if not user:
+        return "No user was found with this token", 404
+    return jsonify(user.serialized)
