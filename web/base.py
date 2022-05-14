@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 
@@ -13,5 +14,6 @@ app.config["SQLALCHEMY_ECHO"] = True
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+CORS(app)
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
