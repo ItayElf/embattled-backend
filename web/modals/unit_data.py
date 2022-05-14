@@ -1,3 +1,5 @@
+from sqlalchemy.inspection import inspect
+
 from web.base import db
 from web.tables import units_keywords, units_attributes
 
@@ -25,3 +27,14 @@ class UnitData(db.Model):
     attributes = db.relationship("Attribute", secondary=units_attributes, lazy=False,
                                  backref=db.backref("units", lazy=True))
     keywords = db.relationship("Keyword", secondary=units_keywords, lazy=False, backref=db.backref("units", lazy=True))
+
+    @property
+    def serialized(self):
+        keys = list(inspect(self).attrs.keys())
+        keys.remove("attributes")
+        keys.remove("keywords")
+        return {
+            **{c: getattr(self, c) for c in keys},
+            "attributes": [a.serailized for a in self.attributes],
+            "keywords": [k.serialized for k in self.keywords]
+        }
