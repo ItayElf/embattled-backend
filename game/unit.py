@@ -90,3 +90,7 @@ class Unit:
             other.morale -= casualties * ratio * morale_modifier
             other.morale = max(math.ceil(other.morale), 0)
         return damage, casualties
+
+    @staticmethod
+    def get_position_as_string(x: int, y: int):
+        return f"{chr(65 + x)}{y + 1}"
