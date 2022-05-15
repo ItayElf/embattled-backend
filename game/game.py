@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 import simple_websocket.ws
 
@@ -13,3 +13,11 @@ class Game:
     host_ws: simple_websocket.ws.Server
     joiner_ws: simple_websocket.ws.Server | None
     mode: Mode
+
+    @property
+    def as_dict(self):
+        return {
+            "host": asdict(self.host),
+            "joiner": asdict(self.joiner),
+            "mode": self.mode.serialized
+        }

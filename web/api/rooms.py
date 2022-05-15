@@ -44,7 +44,7 @@ def rooms_host():
     identity = get_jwt_identity()
     u: User = User.query.filter_by(email=identity).first()
     if not u:
-        return f"No user with email {identity} was found"
+        return f"No user with email {identity} was found", 404
     room_hash = hashlib.md5((name + mode.name + u.name).encode()).hexdigest()
     r = Room(name=name, mode_id=mode.id, host_id=u.id, room_hash=room_hash)
     try:
@@ -53,3 +53,21 @@ def rooms_host():
         return room_hash, 200
     except sqlalchemy.exc.IntegrityError:
         return f"Room name '{name}' is taken.", 400
+
+
+@app.route("/api/rooms/join", methods=["POST"])
+@jwt_required()
+def rooms_join():
+    name = request.json.get("name", None)
+    if not name:
+        return "Missing parameters", 400
+    identity = get_jwt_identity()
+    u: User = User.query.filter_by(email=identity).first()
+    if not u:
+        return f"No user with email {identity} was found", 404
+    r: Room = Room.query.filter_by(name=name).first()
+    if not r:
+        return f"No room with name {name} was found", 404
+    r.joiner_id = u.id
+    db.session.commit()
+    return r.room_hash, 200

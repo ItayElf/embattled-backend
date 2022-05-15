@@ -1,6 +1,7 @@
 import json
 
 import jwt
+import simple_websocket
 
 from game.army import Army
 from game.game import Game
@@ -22,12 +23,12 @@ def _prepare(ws, game):
     user = _get_user(ws)
     room = Room.query.filter_by(room_hash=game).first()
     if not room or (room.host_id != user.id and room.joiner_id != user.id):
-        ws.send(json.dumps({"type": "error", "content": "No room"}))
-    ws.send(json.dumps({"type": "request", "content": "army"}))
+        _send(ws, "error", "No room")
+    _send(ws, "request", "army")
     army = Army.from_json(json.loads(ws.receive()))
     m = Mode.query.filter_by(id=army.mode_id).first()
-    host = room.host_id == user.id
-    if host:
+    is_host = room.host_id == user.id
+    if is_host:
         p = Player(user.name, user.rating, army.units_to_dict())
         g = Game(p, None, ws, None, m)
         games[game] = g
@@ -35,6 +36,15 @@ def _prepare(ws, game):
         p = Player(user.name, user.rating, army.units_to_dict())
         games[game].joiner = p
         games[game].joiner_ws = ws
+    while games[game].joiner is None:
+        ...
+    if is_host:
+        _send(ws, "game_data", json.dumps(games[game].as_dict))
+        _send(games[game].joiner_ws, "game_data", json.dumps(games[game].as_dict))
+
+
+def _send(ws: simple_websocket.Server, msg_type: str, content: str):
+    ws.send(json.dumps({"type": msg_type, "content": content}))
 
 
 def _get_user(ws):
