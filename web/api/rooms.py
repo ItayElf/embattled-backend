@@ -11,7 +11,7 @@ from web.base import app, db
 
 @app.route("/api/rooms")
 def rooms_rooms():
-    rooms = Room.query.all()
+    rooms = Room.query.filter_by(joiner_id=None).all()
     return jsonify([r.serialized for r in rooms])
 
 
