@@ -19,7 +19,7 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "blank_profil
 def auth_login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    if not email or password:
+    if not email or not password:
         return "Missing parameters", 400
     user = User.query.filter_by(email=email).first()
     salt = user.salt

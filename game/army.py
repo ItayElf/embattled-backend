@@ -23,6 +23,7 @@ class Army:
     def validate(self, mode: Mode):
         lst = []
         cost = 0
+        positions = set()
         for unit in self.units:
             u: UnitData = UnitData.query.filter_by(name=unit.name).first()
             if not u:
@@ -33,6 +34,12 @@ class Army:
                 1] > mode.board_size / 4:
                 lst.append(
                     f"'{unit.name}' is positioned at {Unit.get_position_as_string(*unit.position)}, which is out of bounds.")
+            else:
+                t = tuple(unit.position)
+                if t in positions:
+                    lst.append(
+                        f"'{unit.name}' is positioned at {Unit.get_position_as_string(*unit.position)}, which is already occupied")
+                positions.add(tuple(unit.position))
         if cost > mode.points:
             lst.append(f"Your army is worth {cost} points, but only {mode.points} are allowed.")
         return lst
