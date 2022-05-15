@@ -22,6 +22,8 @@ def auth_login():
     if not email or not password:
         return "Missing parameters", 400
     user = User.query.filter_by(email=email).first()
+    if not user:
+        return "Invalid credentials", 401
     salt = user.salt
     if hashlib.md5(password.encode() + salt.encode()).hexdigest() == user.password_hash:
         refresh = create_refresh_token(identity=email)

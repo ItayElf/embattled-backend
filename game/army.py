@@ -43,3 +43,9 @@ class Army:
         if cost > mode.points:
             lst.append(f"Your army is worth {cost} points, but only {mode.points} are allowed.")
         return lst
+
+    def units_to_dict(self):
+        d = {}
+        for i, unit in enumerate(self.units):
+            d[i] = Unit.from_data(UnitData.query.filter_by(name=unit.name).first())
+        return d
