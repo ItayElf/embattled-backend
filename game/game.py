@@ -15,9 +15,11 @@ class Game:
     mode: Mode
     map: str
     is_host_turn: bool = field(init=False)
+    moved_unit: int | None = field(init=False)
 
     def __post_init__(self):
         self.is_host_turn = True
+        self.moved_unit = None
 
     def get_possible_moves(self, host: bool, idx: int) -> list[tuple[int, int]]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
@@ -77,5 +79,6 @@ class Game:
             "joiner": asdict(self.joiner),
             "mode": self.mode.serialized,
             "map": self.map,
-            "is_host_turn": self.is_host_turn
+            "is_host_turn": self.is_host_turn,
+            "moved_unit": self.moved_unit,
         }

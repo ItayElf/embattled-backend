@@ -28,6 +28,7 @@ def sockets_game(ws, game):
             if pos in games[game].get_possible_moves(is_host, i):
                 unit.position = pos
                 unit.activated = True
+                games[game].moved_unit = i
                 _send(ws, "game_data", json.dumps(games[game].as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
