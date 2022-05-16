@@ -30,12 +30,17 @@ def _prepare(ws, game):
     m = Mode.query.filter_by(id=army.mode_id).first()
     is_host = room.host_id == user.id
     if is_host:
-        p = Player(user.name, user.rating, army.units_to_dict())
+        a, f = army.units_to_dict()
+        p = Player(user.name, user.rating, a, f)
         mp = Map.query.filter_by(board_size=m.board_size).order_by(func.random()).first()
         g = Game(p, None, ws, None, m, mp.tiles)
         games[game] = g
     else:
-        p = Player(user.name, user.rating, army.units_to_dict())
+        a, f = army.units_to_dict()
+        if games[game].host.faction == f:
+            f += " Alt"
+        p = Player(user.name, user.rating, a, f)
+        p.fix_position(games[game].mode.board_size)
         games[game].joiner = p
         games[game].joiner_ws = ws
     while games[game].joiner is None:

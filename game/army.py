@@ -24,12 +24,15 @@ class Army:
         lst = []
         cost = 0
         positions = set()
+        factions = set()
         for unit in self.units:
             u: UnitData = UnitData.query.filter_by(name=unit.name).first()
             if not u:
                 lst.append(f"'{unit.name}' is not a valid unit.")
             else:
                 cost += u.cost
+                if u.faction:
+                    factions.add(u.faction)
             if unit.position[0] < 0 or unit.position[0] > mode.board_size or unit.position[1] < 0 or unit.position[
                 1] > mode.board_size / 4:
                 lst.append(
@@ -42,10 +45,18 @@ class Army:
                 positions.add(tuple(unit.position))
         if cost > mode.points:
             lst.append(f"Your army is worth {cost} points, but only {mode.points} are allowed.")
+        if len(factions) > 1:
+            lst.append(f"You have too many factions in your army: {','.join(factions)}")
         return lst
 
     def units_to_dict(self):
         d = {}
+        factions = set()
         for i, unit in enumerate(self.units):
-            d[i] = Unit.from_data(UnitData.query.filter_by(name=unit.name).first())
-        return d
+            unit_data = UnitData.query.filter_by(name=unit.name).first()
+            if unit_data.faction:
+                factions.add(unit_data.faction)
+            d[i] = Unit.from_data(unit_data)
+            d[i].position = tuple(unit.position)
+        faction = list(factions)[0] if len(factions) > 0 else "Mercenaries"
+        return d, faction
