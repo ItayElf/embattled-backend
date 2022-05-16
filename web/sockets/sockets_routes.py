@@ -21,6 +21,16 @@ def sockets_game(ws, game):
         print(f"{msg=}")
         if msg["type"] == "move_request":
             _send(ws, "move", json.dumps(games[game].get_possible_moves(is_host, msg["id"])))
+        elif msg["type"] == "move_action":
+            i = msg["id"]
+            pos = tuple(msg["pos"])
+            unit = games[game].host.army[i] if is_host else games[game].joiner.army[i]
+            if pos in games[game].get_possible_moves(is_host, i):
+                unit.position = pos
+                unit.activated = True
+                _send(ws, "game_data", json.dumps(games[game].as_dict))
+            else:
+                _send(ws, "error", "Illegal Move")
 
 
 def _prepare(ws, game):
