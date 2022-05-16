@@ -56,7 +56,7 @@ class Army:
             unit_data = UnitData.query.filter_by(name=unit.name).first()
             if unit_data.faction:
                 factions.add(unit_data.faction)
-            d[i] = Unit.from_data(unit_data)
-            d[i].position = tuple(unit.position)
+            d[i + 1] = Unit.from_data(unit_data)
+            d[i + 1].position = tuple(unit.position)
         faction = list(factions)[0] if len(factions) > 0 else "Mercenaries"
         return d, faction

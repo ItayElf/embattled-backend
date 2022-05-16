@@ -32,6 +32,7 @@ class Unit:
     attributes: list[Attribute]
     keywords: list[str]
     position: tuple[int, int]  # position from top left corner
+    activated: bool
 
     @classmethod
     def from_data(cls, unit_data: UnitData):
@@ -41,7 +42,7 @@ class Unit:
                    unit_data.defense, unit_data.melee_attack, unit_data.melee_damage, unit_data.charge_bonus,
                    unit_data.ammunition, unit_data.ammunition, unit_data.range, unit_data.ranged_attack,
                    unit_data.ranged_damage, [Attribute.from_model(a) for a in unit_data.attributes],
-                   [a.name for a in unit_data.keywords], (0, 0))
+                   [a.name for a in unit_data.keywords], (0, 0), False)
 
     @property
     def is_ranged(self):
