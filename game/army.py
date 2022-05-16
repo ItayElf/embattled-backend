@@ -33,8 +33,8 @@ class Army:
                 cost += u.cost
                 if u.faction:
                     factions.add(u.faction)
-            if unit.position[0] < 0 or unit.position[0] > mode.board_size or unit.position[1] < 0 or unit.position[
-                1] > mode.board_size / 4:
+            if unit.position[0] < 0 or unit.position[0] >= mode.board_size or unit.position[1] < 0 or unit.position[
+                1] >= mode.board_size / 4:
                 lst.append(
                     f"'{unit.name}' is positioned at {Unit.get_position_as_string(*unit.position)}, which is out of bounds.")
             else:

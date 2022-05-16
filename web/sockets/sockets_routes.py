@@ -15,9 +15,12 @@ games: dict[str, Game] = {}
 
 @sockets.route("/sockets/<game>")
 def sockets_game(ws, game):
-    _prepare(ws, game)
+    is_host = _prepare(ws, game)
     while True:
-        msg = ws.receive()
+        msg = json.loads(ws.receive())
+        print(f"{msg=}")
+        if msg["type"] == "move_request":
+            _send(ws, "move", json.dumps(games[game].get_possible_moves(is_host, msg["id"])))
 
 
 def _prepare(ws, game):
@@ -48,6 +51,7 @@ def _prepare(ws, game):
     if is_host:
         _send(ws, "game_data", json.dumps(games[game].as_dict))
         _send(games[game].joiner_ws, "game_data", json.dumps(games[game].as_dict))
+    return is_host
 
 
 def _send(ws: simple_websocket.Server, msg_type: str, content: str):
