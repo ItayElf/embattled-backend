@@ -2,11 +2,12 @@ import json
 
 import jwt
 import simple_websocket
+from sqlalchemy import func
 
 from game.army import Army
 from game.game import Game
 from game.player import Player
-from web import User, Room, Mode
+from web import User, Room, Mode, Map
 from web.base import sockets, app
 
 games: dict[str, Game] = {}
@@ -30,7 +31,8 @@ def _prepare(ws, game):
     is_host = room.host_id == user.id
     if is_host:
         p = Player(user.name, user.rating, army.units_to_dict())
-        g = Game(p, None, ws, None, m)
+        mp = Map.query.filter_by(board_size=m.board_size).order_by(func.random()).first()
+        g = Game(p, None, ws, None, m, mp.tiles)
         games[game] = g
     else:
         p = Player(user.name, user.rating, army.units_to_dict())
