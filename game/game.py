@@ -2,7 +2,9 @@ from dataclasses import dataclass, asdict, field
 
 import simple_websocket.ws
 
+from game.attack_arguments import AttackArguments
 from game.player import Player
+from game.unit import Unit
 from web import Mode
 
 position = tuple[int, int]
@@ -45,6 +47,36 @@ class Game:
             "melee": list(melee),
             "range": list(range_squares)
         }
+
+    def attack(self, pos: position, idx: int, is_host: bool):
+        unit = self.host.army[idx] if is_host else self.joiner.army[idx]
+        positions = self.get_attacking_squares(is_host, idx)
+        if pos not in positions["melee"] and pos not in positions["range"]:
+            raise Exception("Out of range")
+        target, host = self._unit_at(pos)
+        if not target or host == is_host:
+            raise Exception(f"No valid target at {Unit.get_position_as_string(*pos)}")
+        ranged = pos in positions["range"]
+        charge = unit.activated and not ranged
+        adj_enemy = False
+        adj_ally = False
+        for n in self._get_neighbors(pos):
+            u, h = self._unit_at(n)
+            if not u:
+                continue
+            if h == is_host:
+                adj_ally = True
+            else:
+                adj_enemy = True
+        flank = not ranged and adj_enemy and not adj_ally
+        adv = 0
+        if self._tile_at(unit.position) == "w":
+            adv -= 1
+        if self._tile_at(pos) == "w":
+            adv += 1
+        args = AttackArguments(ranged, flank, charge, adv)
+        print(target)
+        return unit.attack(target, args)
 
     def _get_possible_moves(self, host: bool, speed: float, pos: position, moves: set[tuple[position, float]]) -> set[
         tuple[position, float]]:
@@ -97,6 +129,15 @@ class Game:
         for u in self.joiner.army.values():
             if u.position == pos:
                 return u, False
+        return None, None
+
+    def _index_of_unit_at(self, pos: position):
+        for idx in self.host.army:
+            if self.host.army[idx].position == pos:
+                return idx, True
+        for idx in self.joiner.army:
+            if self.joiner.army[idx].position == pos:
+                return idx, False
         return None, None
 
     def _tile_at(self, pos: position):

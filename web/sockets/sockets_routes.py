@@ -7,6 +7,7 @@ from sqlalchemy import func
 from game.army import Army
 from game.game import Game
 from game.player import Player
+from game.unit import Unit
 from web import User, Room, Mode, Map
 from web.base import sockets, app
 
@@ -34,6 +35,15 @@ def sockets_game(ws, game):
                 _send(ws, "game_data", json.dumps(games[game].as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
+        elif msg["type"] == "attack_action":
+            i = msg["id"]
+            pos = tuple(msg["pos"])
+            # try:
+            damage, casualties = games[game].attack(pos, i, is_host)
+            _send(ws, "game_data", json.dumps(games[game].as_dict))
+            # except Exception as e:
+            #     print("ERROR: " + str(e))
+            #     _send(ws, "error", str(e))
 
 
 def _prepare(ws, game):

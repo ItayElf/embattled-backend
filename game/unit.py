@@ -55,6 +55,8 @@ class Unit:
             m *= 1.25
         if args.charge:
             m *= (1 + self.charge_bonus / 100)
+        power = -1 if args.advantage < 0 else 1 if args.advantage > 0 else 0
+        m *= (1 + 0.25 * abs(min(args.advantage, 4))) ** power
         return m
 
     def calc_damage(self, other: Unit, args: AttackArguments):
@@ -68,7 +70,7 @@ class Unit:
         attack_skill = self.ranged_attack if args.ranged else self.melee_attack
         ratio = min((1, attack_skill / other.defense))
         hits = math.ceil(ratio * self.unit_size)
-        hits = min(self.unit_size, min(1, hits))  # no less than one hit, no more hits than the unit size
+        hits = min(self.unit_size, max(1, hits))  # no less than one hit, no more hits than the unit size
         damage = self.ranged_damage if args.ranged else self.melee_damage
         total = ((damage * damage) / (2 * other.armor)) * hits * self.get_modifiers_for_attack(other, args)
         return round(total, 2)

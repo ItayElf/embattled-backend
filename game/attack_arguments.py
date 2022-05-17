@@ -6,3 +6,4 @@ class AttackArguments:
     ranged: bool
     flank: bool
     charge: bool
+    advantage: int
