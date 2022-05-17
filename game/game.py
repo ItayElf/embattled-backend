@@ -5,6 +5,8 @@ import simple_websocket.ws
 from game.player import Player
 from web import Mode
 
+position = tuple[int, int]
+
 
 @dataclass
 class Game:
@@ -21,23 +23,62 @@ class Game:
         self.is_host_turn = True
         self.moved_unit = None
 
-    def get_possible_moves(self, host: bool, idx: int) -> list[tuple[int, int]]:
+    def get_possible_moves(self, host: bool, idx: int) -> list[position]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
-        return list(self._get_possible_moves(host, unit.speed, unit.position, set()))
+        return list(set(p[0] for p in self._get_possible_moves(host, unit.speed, unit.position, set())))
 
-    def _get_possible_moves(self, host: bool, speed: float, pos: tuple[int, int], moves: set[tuple[int, int]]) -> set[
-        tuple[int, int]]:
+    def get_attacking_squares(self, host: bool, idx: int):
+        unit = self.host.army[idx] if host else self.joiner.army[idx]
+        melee = set(p[0] for p in self._get_attacking_squares(host, 1.5, unit.position, set()))
+        range_squares = set()
+        for n in self._get_neighbors(unit.position):
+            u, is_host = self._unit_at(n)
+            if u and is_host != host or not unit.range:
+                break
+        else:
+            range_squares = set(p[0] for p in self._get_attacking_squares(host, unit.range, unit.position, set()))
+            range_squares.remove(unit.position)
+            for p in melee:
+                if p in range_squares:
+                    range_squares.remove(p)
+        return {
+            "melee": list(melee),
+            "range": list(range_squares)
+        }
+
+    def _get_possible_moves(self, host: bool, speed: float, pos: position, moves: set[tuple[position, float]]) -> set[
+        tuple[position, float]]:
+        if (pos, speed) in moves:
+            return moves
         for n in self._get_neighbors(pos):
             cost = self._get_cost_to_move(pos, n, host)
             if cost > speed:
                 continue
+            self._get_possible_moves(host, speed - cost, n, moves)
             unit_at, is_host = self._unit_at(n)
             if not unit_at:
-                moves.add(n)
-            self._get_possible_moves(host, speed - cost, n, moves)
+                moves.add((n, speed - cost))
         return moves
 
-    def _get_cost_to_move(self, start: tuple[int, int], end: tuple[int, int], host: bool) -> float:
+    def _get_attacking_squares(self, host: bool, distance: float, pos: position, squares: set[tuple[position, float]]):
+        if (pos, distance) in squares:
+            return squares
+        for n in self._get_neighbors(pos):
+            cost = self._get_cost_to_attack(pos, n)
+            if cost > distance:
+                continue
+            self._get_attacking_squares(host, distance - cost, n, squares)
+            squares.add((n, distance - cost))
+        return squares
+
+    def _get_cost_to_attack(self, start: position, end: position):
+        cost = 1.5 if start[0] != end[0] and start[1] != end[1] else 1
+        tile = self._tile_at(end)
+        if tile == "r":
+            cost *= float("inf")
+        return cost  # TODO: handle rocks blocking view
+
+    def _get_cost_to_move(self, start: position, end: position, host: bool) -> float:
         cost = 1.5 if start[0] != end[0] and start[1] != end[1] else 1
         tile = self._tile_at(end)
         if tile == "w":
@@ -49,7 +90,7 @@ class Game:
             cost *= float("inf")
         return cost  # TODO: prevent movement between two diagonal enemies
 
-    def _unit_at(self, pos: tuple[int, int]):
+    def _unit_at(self, pos: position):
         for u in self.host.army.values():
             if u.position == pos:
                 return u, True
@@ -58,10 +99,10 @@ class Game:
                 return u, False
         return None, None
 
-    def _tile_at(self, pos: tuple[int, int]):
+    def _tile_at(self, pos: position):
         return self.map[pos[1] * 16 + pos[0]]
 
-    def _get_neighbors(self, pos: tuple[int, int]):
+    def _get_neighbors(self, pos: position):
         s = set()
         for i in [-1, 0, 1]:
             for j in [-1, 0, 1]:

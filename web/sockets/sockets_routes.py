@@ -21,6 +21,8 @@ def sockets_game(ws, game):
         print(f"{msg=}")
         if msg["type"] == "move_request":
             _send(ws, "move", json.dumps(games[game].get_possible_moves(is_host, msg["id"])))
+        elif msg["type"] == "attack_request":
+            _send(ws, "attack", json.dumps(games[game].get_attacking_squares(is_host, msg["id"])))
         elif msg["type"] == "move_action":
             i = msg["id"]
             pos = tuple(msg["pos"])
