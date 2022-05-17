@@ -84,6 +84,7 @@ def _prepare(ws, game):
         ...
     if is_host:
         _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+        _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
     return is_host
 
 

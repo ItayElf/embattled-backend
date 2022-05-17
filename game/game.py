@@ -20,10 +20,12 @@ class Game:
     map: str
     is_host_turn: bool = field(init=False)
     moved_unit: int | None = field(init=False)
+    turn_counter: int = field(init=False)
 
     def __post_init__(self):
         self.is_host_turn = True
         self.moved_unit = None
+        self.turn_counter = 1
 
     def get_possible_moves(self, host: bool, idx: int) -> list[position]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
@@ -165,4 +167,5 @@ class Game:
             "map": self.map,
             "is_host_turn": self.is_host_turn,
             "moved_unit": self.moved_unit,
+            "turn_counter": self.turn_counter,
         }
