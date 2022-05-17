@@ -32,18 +32,18 @@ def sockets_game(ws, game):
                 unit.position = pos
                 unit.activated = True
                 games[game].moved_unit = i
-                _send(ws, "game_data", json.dumps(games[game].as_dict))
+                _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
         elif msg["type"] == "attack_action":
             i = msg["id"]
             pos = tuple(msg["pos"])
-            # try:
-            damage, casualties = games[game].attack(pos, i, is_host)
-            _send(ws, "game_data", json.dumps(games[game].as_dict))
-            # except Exception as e:
-            #     print("ERROR: " + str(e))
-            #     _send(ws, "error", str(e))
+            try:
+                damage, casualties = games[game].attack(pos, i, is_host)
+                _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+            except Exception as e:
+                print("ERROR: " + str(e))
+                _send(ws, "error", str(e))
 
 
 def _prepare(ws, game):
@@ -72,13 +72,17 @@ def _prepare(ws, game):
     while games[game].joiner is None:
         ...
     if is_host:
-        _send(ws, "game_data", json.dumps(games[game].as_dict))
-        _send(games[game].joiner_ws, "game_data", json.dumps(games[game].as_dict))
+        _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
     return is_host
 
 
 def _send(ws: simple_websocket.Server, msg_type: str, content: str):
     ws.send(json.dumps({"type": msg_type, "content": content}))
+
+
+def _broadcast(game: Game, msg_type: str, content: str):
+    game.host_ws.send(json.dumps({"type": msg_type, "content": content}))
+    game.joiner_ws.send(json.dumps({"type": msg_type, "content": content}))
 
 
 def _get_user(ws):

@@ -35,7 +35,7 @@ class Game:
         range_squares = set()
         for n in self._get_neighbors(unit.position):
             u, is_host = self._unit_at(n)
-            if u and is_host != host or not unit.range:
+            if u and is_host != host or not unit.ammunition:
                 break
         else:
             range_squares = set(p[0] for p in self._get_attacking_squares(host, unit.range, unit.position, set()))
