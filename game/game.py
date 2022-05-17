@@ -76,13 +76,9 @@ class Game:
             adv += 1
         args = AttackArguments(ranged, flank, charge, adv)
         d, c = unit.attack(target, args)
-        killed = False
-        if not target.unit_size or not target.morale:
-            target_id, is_h = self._index_of_unit_at(pos)
-            army = self.host.army if is_h else self.joiner.army
-            del army[target_id]
-            killed = True
-        return c, d, killed
+        killed = not target.unit_size or not target.morale
+        target_id, is_h = self._index_of_unit_at(pos)
+        return d, c, killed, idx, target_id
 
     def _get_possible_moves(self, host: bool, speed: float, pos: position, moves: set[tuple[position, float]]) -> set[
         tuple[position, float]]:

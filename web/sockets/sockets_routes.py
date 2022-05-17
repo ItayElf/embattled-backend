@@ -33,13 +33,24 @@ def sockets_game(ws, game):
                 unit.activated = True
                 games[game].moved_unit = i
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+                _log(games[game], f"{unit.name} (#{i}) moved to {Unit.get_position_as_string(*pos)}.")
             else:
                 _send(ws, "error", "Illegal Move")
         elif msg["type"] == "attack_action":
             i = msg["id"]
             pos = tuple(msg["pos"])
             try:
-                damage, casualties, killed = games[game].attack(pos, i, is_host)
+                damage, casualties, killed, idx, target_idx = games[game].attack(pos, i, is_host)
+                pname = games[game].host.name if is_host else games[game].joiner.name
+                attacker = games[game].host.army[idx] if is_host else games[game].joiner.army[idx]
+                defender = games[game].joiner.army[target_idx] if is_host else games[game].host.army[target_idx]
+                _log(
+                    games[game],
+                    f"{pname} attacked {defender.name} (#{target_idx}) with {attacker.name} (#{idx}), resulting in {casualties} casualties ({damage} damage){', killing the unit' if killed else ''}."
+                )
+                if killed:
+                    army = games[game].host.army if not is_host else games[game].joiner.army
+                    del army[target_idx]
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             except Exception as e:
                 print("ERROR: " + str(e))
@@ -83,6 +94,10 @@ def _send(ws: simple_websocket.Server, msg_type: str, content: str):
 def _broadcast(game: Game, msg_type: str, content: str):
     game.host_ws.send(json.dumps({"type": msg_type, "content": content}))
     game.joiner_ws.send(json.dumps({"type": msg_type, "content": content}))
+
+
+def _log(game: Game, content: str):
+    _broadcast(game, "msg", json.dumps({"type": "log", "content": content}))
 
 
 def _get_user(ws):

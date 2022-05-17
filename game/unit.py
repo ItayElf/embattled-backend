@@ -73,11 +73,11 @@ class Unit:
         hits = min(self.unit_size, max(1, hits))  # no less than one hit, no more hits than the unit size
         damage = self.ranged_damage if args.ranged else self.melee_damage
         total = ((damage * damage) / (2 * other.armor)) * hits * self.get_modifiers_for_attack(other, args)
-        return round(total, 2)
+        return total
 
     def attack(self, other: Unit, args: AttackArguments):
         """Resolve an attack of this unit on 'other' and returns the damage done and casualties"""
-        damage = self.calc_damage(other, args) * random.uniform(0.85, 1)
+        damage = round(self.calc_damage(other, args) * random.uniform(0.85, 1), 2)
         starting_size = other.unit_size
         pool = other.unit_size * other.hitpoints
         pool = max((0, pool - damage))
