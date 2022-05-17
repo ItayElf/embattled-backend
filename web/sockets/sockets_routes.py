@@ -39,7 +39,7 @@ def sockets_game(ws, game):
             i = msg["id"]
             pos = tuple(msg["pos"])
             try:
-                damage, casualties = games[game].attack(pos, i, is_host)
+                damage, casualties, killed = games[game].attack(pos, i, is_host)
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             except Exception as e:
                 print("ERROR: " + str(e))

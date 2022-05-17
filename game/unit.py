@@ -81,7 +81,7 @@ class Unit:
         starting_size = other.unit_size
         pool = other.unit_size * other.hitpoints
         pool = max((0, pool - damage))
-        other.unit_size = math.ceil(pool / other.unit_size)
+        other.unit_size = math.ceil(pool / other.hitpoints)
         casualties = starting_size - other.unit_size
 
         if args.ranged:
