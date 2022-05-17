@@ -32,8 +32,8 @@ def sockets_game(ws, game):
                 unit.position = pos
                 unit.activated = True
                 games[game].moved_unit = i
-                _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
                 _log(games[game], f"{unit.name} (#{i}) moved to {Unit.get_position_as_string(*pos)}.")
+                _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
         elif msg["type"] == "attack_action":
@@ -51,6 +51,8 @@ def sockets_game(ws, game):
                 if killed:
                     army = games[game].host.army if not is_host else games[game].joiner.army
                     del army[target_idx]
+                if games[game].pass_round():
+                    _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             except Exception as e:
                 print("ERROR: " + str(e))

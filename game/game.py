@@ -80,7 +80,33 @@ class Game:
         d, c = unit.attack(target, args)
         killed = not target.unit_size or not target.morale
         target_id, is_h = self._index_of_unit_at(pos)
+        unit.activated = True
         return d, c, killed, idx, target_id
+
+    def pass_round(self):
+        self.moved_unit = None
+        army = self.joiner.army if self.is_host_turn else self.host.army
+        other_army = self.host.army if self.is_host_turn else self.joiner.army
+        for u in army.values():
+            if not u.activated:
+                self.is_host_turn = not self.is_host_turn
+                break
+        else:
+            for u in other_army.values():
+                if not u.activated:
+                    break
+            else:
+                self._pass_turn()
+                return True
+        return False
+
+    def _pass_turn(self):
+        for u in self.host.army.values():
+            u.activated = False
+        for u in self.joiner.army.values():
+            u.activated = False
+        self.turn_counter += 1
+        self.is_host_turn = True
 
     def _get_possible_moves(self, host: bool, speed: float, pos: position, moves: set[tuple[position, float]]) -> set[
         tuple[position, float]]:
