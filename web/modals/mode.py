@@ -8,6 +8,7 @@ class Mode(db.Model):
     name = db.Column(db.String, nullable=False)
     points = db.Column(db.Integer, nullable=False)
     board_size = db.Column(db.Integer, nullable=False)
+    win_condition = db.Column(db.String, nullable=False)
 
     @property
     def serialized(self):

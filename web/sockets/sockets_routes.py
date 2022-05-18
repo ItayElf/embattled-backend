@@ -32,7 +32,8 @@ def sockets_game(ws: simple_websocket.Server, game):
                 unit.position = pos
                 unit.activated = True
                 games[game].moved_unit = i
-                _log(games[game], f"{unit.name} (#{i}) moved to {Unit.get_position_as_string(*pos)}.")
+                _log(games[game],
+                     f"<strong>{unit.name} (#{i})</strong> moved to <strong>{Unit.get_position_as_string(*pos)}</strong>.")
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
@@ -46,7 +47,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                 defender = games[game].joiner.army[target_idx] if is_host else games[game].host.army[target_idx]
                 _log(
                     games[game],
-                    f"{pname} attacked {defender.name} (#{target_idx}) with {attacker.name} (#{idx}), resulting in {casualties} casualties ({damage} damage){', killing the unit' if killed else ''}."
+                    f"<strong>{pname}</strong> attacked <strong>{defender.name} (#{target_idx})</strong> with <strong>{attacker.name} (#{idx})</strong>, resulting in <strong>{casualties} casualties</strong> ({damage} damage){', killing the unit' if killed else ''}."
                 )
                 if killed:
                     army = games[game].host.army if not is_host else games[game].joiner.army
@@ -92,12 +93,16 @@ def _prepare(ws, game):
         ...
     if is_host:
         _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+        _log(games[game],
+             f"<strong>Game started between {games[game].host.name} and {games[game].joiner.name}.</strong><br/>"
+             f"<strong>Mode:</strong> {games[game].mode.name} ({games[game].mode.points}P).<br/>"
+             f"<strong>Win Condition:</strong> {games[game].mode.win_condition}.")
         _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
     return is_host
 
 
 def _handle_win(game: Game, winner: Player, loser: Player):
-    _log(game, f"{winner.name} defeated {loser.name}.")
+    _log(game, f"<strong>{winner.name} defeated {loser.name}.</strong>")
     _broadcast(game, "game_data", json.dumps(game.as_dict))
 
 

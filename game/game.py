@@ -21,11 +21,13 @@ class Game:
     is_host_turn: bool = field(init=False)
     moved_unit: int | None = field(init=False)
     turn_counter: int = field(init=False)
+    ended: bool = field(init=False)
 
     def __post_init__(self):
         self.is_host_turn = True
         self.moved_unit = None
         self.turn_counter = 1
+        self.ended = False
 
     def get_possible_moves(self, host: bool, idx: int) -> list[position]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
@@ -106,6 +108,7 @@ class Game:
         is_win = False
         if "Blitz" in self.mode.name:
             is_win = other.relative_cost < int(other.original_value * 2 / 3)
+        self.ended = is_win
         return is_win, current, other
 
     def _pass_turn(self):
@@ -202,4 +205,5 @@ class Game:
             "is_host_turn": self.is_host_turn,
             "moved_unit": self.moved_unit,
             "turn_counter": self.turn_counter,
+            "ended": self.ended,
         }
