@@ -34,6 +34,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                 games[game].moved_unit = i
                 _log(games[game],
                      f"<strong>{unit.name} (#{i})</strong> moved to <strong>{Unit.get_position_as_string(*pos)}</strong>.")
+                games[game].update_visibility()
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
@@ -81,6 +82,7 @@ def _prepare(ws, game):
         mp = Map.query.filter_by(board_size=m.board_size).order_by(func.random()).first()
         g = Game(p, None, ws, None, m, mp.tiles)
         games[game] = g
+        games[game].update_visibility(True)
     else:
         a, f = army.units_to_dict()
         if games[game].host.faction == f:
@@ -89,6 +91,7 @@ def _prepare(ws, game):
         p.fix_position(games[game].mode.board_size)
         games[game].joiner = p
         games[game].joiner_ws = ws
+        games[game].update_visibility(False)
     while games[game].joiner is None:
         ...
     if is_host:

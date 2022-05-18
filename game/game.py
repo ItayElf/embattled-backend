@@ -22,12 +22,16 @@ class Game:
     moved_unit: int | None = field(init=False)
     turn_counter: int = field(init=False)
     ended: bool = field(init=False)
+    host_visible: set[position] = field(init=False)
+    joiner_visible: set[position] = field(init=False)
 
     def __post_init__(self):
         self.is_host_turn = True
         self.moved_unit = None
         self.turn_counter = 1
         self.ended = False
+        self.host_visible = set()
+        self.joiner_visible = set()
 
     def get_possible_moves(self, host: bool, idx: int) -> list[position]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
@@ -47,9 +51,10 @@ class Game:
             for p in melee:
                 if p in range_squares:
                     range_squares.remove(p)
+        visible = self.host_visible if host else self.joiner_visible
         return {
-            "melee": list(melee),
-            "range": list(range_squares)
+            "melee": list(melee.intersection(visible)),
+            "range": list(range_squares.intersection(visible))
         }
 
     def attack(self, pos: position, idx: int, is_host: bool):
@@ -111,6 +116,13 @@ class Game:
         self.ended = is_win
         return is_win, current, other
 
+    def update_visibility(self, host: bool | None = None):
+        val = host if host is not None else self.is_host_turn
+        if val:
+            self.host_visible = self._get_visible_squares(True)
+        else:
+            self.joiner_visible = self._get_visible_squares(False)
+
     def _pass_turn(self):
         for u in self.host.army.values():
             u.activated = False
@@ -132,6 +144,23 @@ class Game:
             if not unit_at:
                 moves.add((n, speed - cost))
         return moves
+
+    def _get_visible_squares(self, host: bool) -> set[position]:
+        def _inner(visibility: float, pos: position, squares: set[tuple[position, float]]):
+            if (pos, visibility) in squares:
+                return squares
+            for n in self._get_neighbors(pos):
+                cost = 1.5 if pos[0] != n[0] and pos[1] != n[1] else 1
+                if cost > visibility:
+                    continue
+                _inner(visibility - cost, n, squares)
+                squares.add((n, visibility - cost))
+            return squares
+
+        s = set()
+        for u in (self.host if host else self.joiner).army.values():
+            _inner(u.visibility, u.position, s)
+        return set(v[0] for v in s)
 
     def _get_attacking_squares(self, host: bool, distance: float, pos: position, squares: set[tuple[position, float]]):
         if (pos, distance) in squares:
@@ -206,4 +235,6 @@ class Game:
             "moved_unit": self.moved_unit,
             "turn_counter": self.turn_counter,
             "ended": self.ended,
+            "host_visible": list(self.host_visible),
+            "joiner_visible": list(self.joiner_visible),
         }

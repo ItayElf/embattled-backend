@@ -49,6 +49,10 @@ class Unit:
     def is_ranged(self):
         return self.range is not None
 
+    @property
+    def visibility(self):
+        return 6
+
     def get_modifiers_for_attack(self, other: Unit, args: AttackArguments):
         """Returns the modifier of the damage an attack should have"""
         m = 1
