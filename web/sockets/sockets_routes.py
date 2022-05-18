@@ -54,10 +54,9 @@ def sockets_game(ws: simple_websocket.Server, game):
                     army = games[game].host.army if not is_host else games[game].joiner.army
                     del army[target_idx]
                 if _pass_turn(games[game]):
-                    # break
                     ...
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
-            except Exception as e:
+            except ValueError as e:
                 print("ERROR: " + str(e))
                 _send(ws, "error", str(e))
         elif msg["type"] == "halt":
@@ -66,9 +65,11 @@ def sockets_game(ws: simple_websocket.Server, game):
                 games[game].current_player.army[i].activated = True
                 _log(games[game], f"<strong>{games[game].current_player.army[i].name} (#{i})</strong> halted.")
             if _pass_turn(games[game]):
-                # break
                 ...
             _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+        elif msg["type"] == "close":
+            break
+    print(f"LOGGED OUT: {is_host=}")
 
 
 def _prepare(ws, game):
@@ -112,8 +113,8 @@ def _pass_turn(game: Game):
     is_win, winner, loser = game.check_win()
     if is_win:
         _handle_win(game, winner, loser)
-        game.host_ws.close()
-        game.joiner_ws.close()
+        # game.host_ws.close()
+        # game.joiner_ws.close()
         return is_win
     if game.pass_round():
         _broadcast(game, "msg", json.dumps({"type": "turn", "turn": game.turn_counter}))
@@ -144,8 +145,10 @@ def _send(ws: simple_websocket.Server, msg_type: str, content: str):
 
 
 def _broadcast(game: Game, msg_type: str, content: str):
-    game.host_ws.send(json.dumps({"type": msg_type, "content": content}))
-    game.joiner_ws.send(json.dumps({"type": msg_type, "content": content}))
+    if game.host_ws and game.joiner_ws.connected:
+        game.host_ws.send(json.dumps({"type": msg_type, "content": content}))
+    if game.joiner_ws and game.joiner_ws.connected:
+        game.joiner_ws.send(json.dumps({"type": msg_type, "content": content}))
 
 
 def _log(game: Game, content: str):

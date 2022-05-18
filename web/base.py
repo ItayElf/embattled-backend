@@ -16,6 +16,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
 app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 25}
 CORS(app)
 db = SQLAlchemy(app)
 jwt = JWTManager(app)

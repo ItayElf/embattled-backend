@@ -61,10 +61,10 @@ class Game:
         unit = self.host.army[idx] if is_host else self.joiner.army[idx]
         positions = self.get_attacking_squares(is_host, idx)
         if pos not in positions["melee"] and pos not in positions["range"]:
-            raise Exception("Out of range")
+            raise ValueError("Out of range")
         target, host = self._unit_at(pos)
         if not target or host == is_host:
-            raise Exception(f"No valid target at {Unit.get_position_as_string(*pos)}")
+            raise ValueError(f"No valid target at {Unit.get_position_as_string(*pos)}")
         ranged = pos in positions["range"]
         charge = unit.activated and not ranged
         adj_enemy = False
