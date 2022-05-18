@@ -13,6 +13,7 @@ from web import UnitData
 class Unit:
     name: str
     clas: str
+    cost: int
     unit_size_max: int
     unit_size: int
     hitpoints: int
@@ -37,7 +38,7 @@ class Unit:
     @classmethod
     def from_data(cls, unit_data: UnitData):
         """Returns a unit object from datasheet"""
-        return cls(unit_data.name, unit_data.clas, unit_data.unit_size, unit_data.unit_size,
+        return cls(unit_data.name, unit_data.clas, unit_data.cost, unit_data.unit_size, unit_data.unit_size,
                    unit_data.hitpoints, unit_data.armor, unit_data.morale, unit_data.morale, unit_data.speed,
                    unit_data.defense, unit_data.melee_attack, unit_data.melee_damage, unit_data.charge_bonus,
                    unit_data.ammunition, unit_data.ammunition, unit_data.range, unit_data.ranged_attack,
@@ -93,6 +94,10 @@ class Unit:
             other.morale -= casualties * ratio * morale_modifier
             other.morale = max(math.ceil(other.morale), 0)
         return damage, casualties
+
+    @property
+    def relative_value(self):
+        return int(self.cost * (self.unit_size / self.unit_size_max))
 
     @staticmethod
     def get_position_as_string(x: int, y: int):

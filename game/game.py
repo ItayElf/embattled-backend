@@ -100,6 +100,14 @@ class Game:
                 return True
         return False
 
+    def check_win(self):
+        current = self.host if self.is_host_turn else self.joiner
+        other = self.joiner if self.is_host_turn else self.host
+        is_win = False
+        if "Blitz" in self.mode.name:
+            is_win = other.relative_cost < int(other.original_value * 2 / 3)
+        return is_win, current, other
+
     def _pass_turn(self):
         for u in self.host.army.values():
             u.activated = False

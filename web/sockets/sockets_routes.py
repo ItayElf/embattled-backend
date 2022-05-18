@@ -15,7 +15,7 @@ games: dict[str, Game] = {}
 
 
 @sockets.route("/sockets/<game>")
-def sockets_game(ws, game):
+def sockets_game(ws: simple_websocket.Server, game):
     is_host = _prepare(ws, game)
     while True:
         msg = json.loads(ws.receive())
@@ -51,6 +51,12 @@ def sockets_game(ws, game):
                 if killed:
                     army = games[game].host.army if not is_host else games[game].joiner.army
                     del army[target_idx]
+                is_win, winner, loser = games[game].check_win()
+                if is_win:
+                    _handle_win(games[game], winner, loser)
+                    ws.close()
+                    (games[game].joiner_ws if is_host else games[game].host_ws).close()
+                    break
                 if games[game].pass_round():
                     _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
@@ -88,6 +94,11 @@ def _prepare(ws, game):
         _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
         _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
     return is_host
+
+
+def _handle_win(game: Game, winner: Player, loser: Player):
+    _log(game, f"{winner.name} defeated {loser.name}.")
+    _broadcast(game, "game_data", json.dumps(game.as_dict))
 
 
 def _send(ws: simple_websocket.Server, msg_type: str, content: str):

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from game.unit import Unit
 
@@ -9,6 +9,14 @@ class Player:
     rating: int
     army: dict[int, Unit]
     faction: str
+    original_value: int = field(init=False)
+
+    def __post_init__(self):
+        self.original_value = sum([u.cost for u in self.army.values()])
+
+    @property
+    def relative_cost(self):
+        return sum([u.relative_value for u in self.army.values()])
 
     def fix_position(self, board_size: int):
         for unit in self.army.values():
