@@ -53,18 +53,20 @@ def sockets_game(ws: simple_websocket.Server, game):
                 if killed:
                     army = games[game].host.army if not is_host else games[game].joiner.army
                     del army[target_idx]
-                is_win, winner, loser = games[game].check_win()
-                if is_win:
-                    _handle_win(games[game], winner, loser)
-                    ws.close()
-                    (games[game].joiner_ws if is_host else games[game].host_ws).close()
+                if _pass_turn(games[game]):
                     break
-                if games[game].pass_round():
-                    _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             except Exception as e:
                 print("ERROR: " + str(e))
                 _send(ws, "error", str(e))
+        elif msg["type"] == "halt":
+            i = msg["id"]
+            if i != -1:
+                games[game].host.army[i].activated = True
+                _log(games[game], f"<strong>{games[game].host.army[i].name} (#{i})</strong> halted.")
+            if _pass_turn(games[game]):
+                break
+            _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
 
 
 def _prepare(ws, game):
@@ -102,6 +104,18 @@ def _prepare(ws, game):
              f"<strong>Win Condition:</strong> {games[game].mode.win_condition}.")
         _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
     return is_host
+
+
+def _pass_turn(game: Game):
+    is_win, winner, loser = game.check_win()
+    if is_win:
+        _handle_win(game, winner, loser)
+        game.host_ws.close()
+        game.joiner_ws.close()
+        return is_win
+    if game.pass_round():
+        _broadcast(game, "msg", json.dumps({"type": "turn", "turn": game.turn_counter}))
+    return is_win
 
 
 def _handle_win(game: Game, winner: Player, loser: Player):
