@@ -225,6 +225,10 @@ class Game:
         return s
 
     @property
+    def current_player(self):
+        return self.host if self.is_host_turn else self.joiner
+
+    @property
     def as_dict(self):
         return {
             "host": asdict(self.host),

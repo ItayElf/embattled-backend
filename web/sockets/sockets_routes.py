@@ -9,7 +9,7 @@ from game.game import Game
 from game.player import Player
 from game.unit import Unit
 from web import User, Room, Mode, Map
-from web.base import sockets, app
+from web.base import sockets, app, db
 
 games: dict[str, Game] = {}
 
@@ -54,7 +54,8 @@ def sockets_game(ws: simple_websocket.Server, game):
                     army = games[game].host.army if not is_host else games[game].joiner.army
                     del army[target_idx]
                 if _pass_turn(games[game]):
-                    break
+                    # break
+                    ...
                 _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
             except Exception as e:
                 print("ERROR: " + str(e))
@@ -62,10 +63,11 @@ def sockets_game(ws: simple_websocket.Server, game):
         elif msg["type"] == "halt":
             i = msg["id"]
             if i != -1:
-                games[game].host.army[i].activated = True
-                _log(games[game], f"<strong>{games[game].host.army[i].name} (#{i})</strong> halted.")
+                games[game].current_player.army[i].activated = True
+                _log(games[game], f"<strong>{games[game].current_player.army[i].name} (#{i})</strong> halted.")
             if _pass_turn(games[game]):
-                break
+                # break
+                ...
             _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
 
 
@@ -99,7 +101,7 @@ def _prepare(ws, game):
     if is_host:
         _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
         _log(games[game],
-             f"<strong>Game started between {games[game].host.name} and {games[game].joiner.name}.</strong><br/>"
+             f"<strong>Game started between {games[game].host.name} ({games[game].host.rating}) and {games[game].joiner.name} ({games[game].joiner.rating}).</strong><br/>"
              f"<strong>Mode:</strong> {games[game].mode.name} ({games[game].mode.points}P).<br/>"
              f"<strong>Win Condition:</strong> {games[game].mode.win_condition}.")
         _broadcast(games[game], "msg", json.dumps({"type": "turn", "turn": games[game].turn_counter}))
@@ -119,7 +121,21 @@ def _pass_turn(game: Game):
 
 
 def _handle_win(game: Game, winner: Player, loser: Player):
-    _log(game, f"<strong>{winner.name} defeated {loser.name}.</strong>")
+    ra = winner.rating
+    rb = loser.rating
+    nra = winner.calc_new_rating(rb, True)
+    nrb = loser.calc_new_rating(ra, False)
+    w = User.query.filter_by(name=winner.name).first()
+    w.rating = nra
+    l = User.query.filter_by(name=loser.name).first()
+    l.rating = nrb
+    db.session.commit()
+    _log(
+        game,
+        f"<strong>{winner.name} defeated {loser.name}.</strong><br/>"
+        f"<strong>{winner.name}'s new rating is <strong>{nra}</strong> (+{nra - ra})<br/>"
+        f"<strong>{loser.name}'s new rating is <strong>{nrb}</strong> ({nrb - rb})<br/>"
+    )
     _broadcast(game, "game_data", json.dumps(game.as_dict))
 
 
