@@ -35,6 +35,6 @@ class UnitData(db.Model):
         keys.remove("keywords")
         return {
             **{c: getattr(self, c) for c in keys},
-            "attributes": [a.serailized for a in self.attributes],
+            "attributes": [a.serialized for a in self.attributes],
             "keywords": [k.serialized for k in self.keywords]
         }

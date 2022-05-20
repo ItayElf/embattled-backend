@@ -17,56 +17,57 @@ games: dict[str, Game] = {}
 @sockets.route("/sockets/<game>")
 def sockets_game(ws: simple_websocket.Server, game):
     is_host = _prepare(ws, game)
+    game_obj = games[game]
     while True:
         msg = json.loads(ws.receive())
         print(f"{msg=}")
         if msg["type"] == "move_request":
-            _send(ws, "move", json.dumps(games[game].get_possible_moves(is_host, msg["id"])))
+            _send(ws, "move", json.dumps(game_obj.get_possible_moves(is_host, msg["id"])))
         elif msg["type"] == "attack_request":
-            _send(ws, "attack", json.dumps(games[game].get_attacking_squares(is_host, msg["id"])))
+            _send(ws, "attack", json.dumps(game_obj.get_attacking_squares(is_host, msg["id"])))
         elif msg["type"] == "move_action":
             i = msg["id"]
             pos = tuple(msg["pos"])
-            unit = games[game].host.army[i] if is_host else games[game].joiner.army[i]
-            if pos in games[game].get_possible_moves(is_host, i):
+            unit = game_obj.host.army[i] if is_host else game_obj.joiner.army[i]
+            if pos in game_obj.get_possible_moves(is_host, i):
                 unit.position = pos
                 unit.activated = True
-                games[game].moved_unit = i
-                _log(games[game],
+                game_obj.moved_unit = i
+                _log(game_obj,
                      f"<strong>{unit.name} (#{i})</strong> moved to <strong>{Unit.get_position_as_string(*pos)}</strong>.")
-                games[game].update_visibility()
-                _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+                game_obj.update_visibility()
+                _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
         elif msg["type"] == "attack_action":
             i = msg["id"]
             pos = tuple(msg["pos"])
             try:
-                damage, casualties, killed, idx, target_idx = games[game].attack(pos, i, is_host)
-                pname = games[game].host.name if is_host else games[game].joiner.name
-                attacker = games[game].host.army[idx] if is_host else games[game].joiner.army[idx]
-                defender = games[game].joiner.army[target_idx] if is_host else games[game].host.army[target_idx]
+                damage, casualties, killed, idx, target_idx = game_obj.attack(pos, i, is_host)
+                pname = game_obj.host.name if is_host else game_obj.joiner.name
+                attacker = game_obj.host.army[idx] if is_host else game_obj.joiner.army[idx]
+                defender = game_obj.joiner.army[target_idx] if is_host else game_obj.host.army[target_idx]
                 _log(
-                    games[game],
+                    game_obj,
                     f"<strong>{pname}</strong> attacked <strong>{defender.name} (#{target_idx})</strong> with <strong>{attacker.name} (#{idx})</strong>, resulting in <strong>{casualties} casualties</strong> ({damage} damage){', killing the unit' if killed else ''}."
                 )
                 if killed:
-                    army = games[game].host.army if not is_host else games[game].joiner.army
+                    army = game_obj.host.army if not is_host else game_obj.joiner.army
                     del army[target_idx]
-                if _pass_turn(games[game]):
+                if _pass_turn(game_obj, game):
                     ...
-                _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+                _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
             except ValueError as e:
                 print("ERROR: " + str(e))
                 _send(ws, "error", str(e))
         elif msg["type"] == "halt":
             i = msg["id"]
             if i != -1:
-                games[game].current_player.army[i].activated = True
-                _log(games[game], f"<strong>{games[game].current_player.army[i].name} (#{i})</strong> halted.")
-            if _pass_turn(games[game]):
+                game_obj.current_player.army[i].activated = True
+                _log(game_obj, f"<strong>{game_obj.current_player.army[i].name} (#{i})</strong> halted.")
+            if _pass_turn(game_obj, game):
                 ...
-            _broadcast(games[game], "game_data", json.dumps(games[game].as_dict))
+            _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
         elif msg["type"] == "close":
             break
     print(f"LOGGED OUT: {is_host=}")
@@ -109,10 +110,10 @@ def _prepare(ws, game):
     return is_host
 
 
-def _pass_turn(game: Game):
+def _pass_turn(game: Game, room_hash: str):
     is_win, winner, loser = game.check_win()
     if is_win:
-        _handle_win(game, winner, loser)
+        _handle_win(game, winner, loser, room_hash)
         # game.host_ws.close()
         # game.joiner_ws.close()
         return is_win
@@ -121,7 +122,7 @@ def _pass_turn(game: Game):
     return is_win
 
 
-def _handle_win(game: Game, winner: Player, loser: Player):
+def _handle_win(game: Game, winner: Player, loser: Player, room_hash: str):
     ra = winner.rating
     rb = loser.rating
     nra = winner.calc_new_rating(rb, True)
@@ -130,7 +131,6 @@ def _handle_win(game: Game, winner: Player, loser: Player):
     w.rating = nra
     l = User.query.filter_by(name=loser.name).first()
     l.rating = nrb
-    db.session.commit()
     _log(
         game,
         f"<strong>{winner.name} defeated {loser.name}.</strong><br/>"
@@ -138,6 +138,10 @@ def _handle_win(game: Game, winner: Player, loser: Player):
         f"<strong>{loser.name}'s new rating is <strong>{nrb}</strong> ({nrb - rb})<br/>"
     )
     _broadcast(game, "game_data", json.dumps(game.as_dict))
+    room = Room.query.filter_by(room_hash=room_hash).first()
+    del games[room.room_hash]
+    db.session.delete(room)
+    db.session.commit()
 
 
 def _send(ws: simple_websocket.Server, msg_type: str, content: str):
