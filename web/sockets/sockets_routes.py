@@ -30,12 +30,30 @@ def sockets_game(ws: simple_websocket.Server, game):
             pos = tuple(msg["pos"])
             unit = game_obj.host.army[i] if is_host else game_obj.joiner.army[i]
             if pos in game_obj.get_possible_moves(is_host, i):
-                game_obj.last_move = unit.position
+                game_obj.last_move = (unit.position, pos)
                 unit.position = pos
                 unit.activated = True
                 game_obj.moved_unit = i
-                _log(game_obj,
-                     f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move)}</strong> to <strong>{Unit.get_position_as_string(*pos)}</strong>.")
+                _send(
+                    game_obj.host_ws,
+                    "msg",
+                    json.dumps(
+                        {
+                            "type": "log",
+                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0]) if game_obj.last_move[0] in game_obj.host_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos) if pos in game_obj.host_visible else '??'}</strong>."
+                        }
+                    )
+                )
+                _send(
+                    game_obj.joiner_ws,
+                    "msg",
+                    json.dumps(
+                        {
+                            "type": "log",
+                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0]) if game_obj.last_move[0] in game_obj.joiner_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos) if pos in game_obj.joiner_visible else '??'}</strong>."
+                        }
+                    )
+                )
                 game_obj.update_visibility()
                 _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
             else:

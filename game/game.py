@@ -20,7 +20,7 @@ class Game:
     map: str
     is_host_turn: bool = field(init=False)
     moved_unit: int | None = field(init=False)
-    last_move: tuple[int, int] | None = field(init=False)
+    last_move: tuple[position, position] | None = field(init=False)
     turn_counter: int = field(init=False)
     ended: bool = field(init=False)
     host_visible: set[position] = field(init=False)
@@ -74,7 +74,7 @@ class Game:
         if not target or host == is_host:
             raise ValueError(f"No valid target at {Unit.get_position_as_string(*pos)}")
         ranged = pos in positions["range"]
-        charge = (unit.activated and self.last_move not in self._get_neighbors(pos)) and not ranged
+        charge = (unit.activated and self.last_move[0] not in self._get_neighbors(pos)) and not ranged
         adj_enemy = False
         adj_ally = False
         for n in self._get_neighbors(pos):
@@ -246,6 +246,7 @@ class Game:
             "map": self.map,
             "is_host_turn": self.is_host_turn,
             "moved_unit": self.moved_unit,
+            "last_move": self.last_move,
             "turn_counter": self.turn_counter,
             "ended": self.ended,
             "host_visible": list(self.host_visible),
