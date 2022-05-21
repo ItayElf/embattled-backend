@@ -69,6 +69,12 @@ class Unit:
         m *= (1 + 0.25 * abs(min(args.advantage, 4))) ** power
         return m
 
+    def get_morale_modifier(self, other: Unit, args: AttackArguments):
+        m = 1.5 if args.flank else 1
+        if self.has_attribute("Fearsome"):
+            m *= 1.5
+        return m
+
     def calc_damage(self, other: Unit, args: AttackArguments):
         """Returns the maximum damage a can do to another"""
         if args.ranged:
@@ -80,7 +86,7 @@ class Unit:
         attack_skill = self.ranged_attack if args.ranged else self.melee_attack
         ratio = min((1.25, attack_skill / other.defense))
         hits = math.ceil(ratio * self.unit_size)
-        hits = min(self.unit_size, max(1, hits))  # no less than one hit, no more hits than the unit size
+        hits = max(1, hits)  # no less than one hit, no more hits than the unit size
         damage = self.ranged_damage if args.ranged else self.melee_damage
         total = ((damage * damage) / (2 * other.armor)) * hits * self.get_modifiers_for_attack(other, args)
         return total
@@ -98,7 +104,7 @@ class Unit:
             self.ammunition -= 1
 
         if other.unit_size:
-            morale_modifier = 1.5 if args.flank else 1
+            morale_modifier = self.get_morale_modifier(other, args)
             ratio = casualties / starting_size + 0.5
             other.morale -= casualties * ratio * morale_modifier
             other.morale = max(math.ceil(other.morale), 0)

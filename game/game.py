@@ -35,7 +35,13 @@ class Game:
 
     def get_possible_moves(self, host: bool, idx: int) -> list[position]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
-        return list(set(p[0] for p in self._get_possible_moves(host, unit.speed, unit.position, set())))
+        speed = unit.speed
+        for n in self._get_neighbors(unit.position):
+            u, is_host = self._unit_at(n)
+            if u and is_host != host:
+                speed = unit.speed / 2
+                break
+        return list(set(p[0] for p in self._get_possible_moves(host, speed, unit.position, set())))
 
     def get_attacking_squares(self, host: bool, idx: int):
         unit = self.host.army[idx] if host else self.joiner.army[idx]

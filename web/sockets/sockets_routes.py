@@ -49,7 +49,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                 defender = game_obj.joiner.army[target_idx] if is_host else game_obj.host.army[target_idx]
                 _log(
                     game_obj,
-                    f"<strong>{pname}</strong> attacked <strong>{defender.name} (#{target_idx})</strong> with <strong>{attacker.name} (#{idx})</strong>, resulting in <strong>{casualties} casualties</strong> ({damage} damage){', killing the unit' if killed else ''}."
+                    f"<strong>{pname}</strong> attacked <strong>{defender.name} (#{target_idx})</strong> with <strong>{attacker.name} (#{idx})</strong>, resulting in <strong>{casualties} casualties</strong> ({damage} damage){', <strong>killing the unit</strong>' if killed else ''}."
                 )
                 if killed:
                     army = game_obj.host.army if not is_host else game_obj.joiner.army
