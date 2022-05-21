@@ -41,12 +41,14 @@ class Army:
                 t = tuple(unit.position)
                 if t in positions:
                     lst.append(
-                        f"'{unit.name}' is positioned at {Unit.get_position_as_string(*unit.position)}, which is already occupied")
+                        f"'{unit.name}' is positioned at {Unit.get_position_as_string(*unit.position)}, which is already occupied.")
                 positions.add(tuple(unit.position))
         if cost > mode.points:
             lst.append(f"Your army is worth {cost} points, but only {mode.points} are allowed.")
         if len(factions) > 1:
-            lst.append(f"You have too many factions in your army: {','.join(factions)}")
+            lst.append(f"You have too many factions in your army: {','.join(factions)}.")
+        if not self.units:
+            lst.append("This army has no units.")
         return lst
 
     def units_to_dict(self):

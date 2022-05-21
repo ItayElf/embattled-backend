@@ -1,6 +1,7 @@
 # Project specifics
 main.db
 */**/hidden.py
+balance
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

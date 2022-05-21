@@ -1,1 +1,1 @@
-from .sockets_routes import *
+from .sockets_routes import sockets_game

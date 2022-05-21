@@ -51,14 +51,19 @@ class Unit:
 
     @property
     def visibility(self):
+        if self.has_attribute("Alert"):
+            return 8
         return 6
+
+    def has_attribute(self, attr: str):
+        return any([a.name.lower() == attr.lower() for a in self.attributes])
 
     def get_modifiers_for_attack(self, other: Unit, args: AttackArguments):
         """Returns the modifier of the damage an attack should have"""
         m = 1
         if args.flank:
             m *= 1.25
-        if args.charge:
+        if args.charge and not (other.has_attribute("Polearm") and not args.flank):
             m *= (1 + self.charge_bonus / 100)
         power = -1 if args.advantage < 0 else 1 if args.advantage > 0 else 0
         m *= (1 + 0.25 * abs(min(args.advantage, 4))) ** power
@@ -73,7 +78,7 @@ class Unit:
                 raise ValueError("Unit is out of ammunition")
 
         attack_skill = self.ranged_attack if args.ranged else self.melee_attack
-        ratio = min((1, attack_skill / other.defense))
+        ratio = min((1.25, attack_skill / other.defense))
         hits = math.ceil(ratio * self.unit_size)
         hits = min(self.unit_size, max(1, hits))  # no less than one hit, no more hits than the unit size
         damage = self.ranged_damage if args.ranged else self.melee_damage
