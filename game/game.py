@@ -20,6 +20,7 @@ class Game:
     map: str
     is_host_turn: bool = field(init=False)
     moved_unit: int | None = field(init=False)
+    last_move: tuple[int, int] | None = field(init=False)
     turn_counter: int = field(init=False)
     ended: bool = field(init=False)
     host_visible: set[position] = field(init=False)
@@ -28,6 +29,7 @@ class Game:
     def __post_init__(self):
         self.is_host_turn = True
         self.moved_unit = None
+        self.last_move = None
         self.turn_counter = 1
         self.ended = False
         self.host_visible = set()
@@ -72,7 +74,7 @@ class Game:
         if not target or host == is_host:
             raise ValueError(f"No valid target at {Unit.get_position_as_string(*pos)}")
         ranged = pos in positions["range"]
-        charge = unit.activated and not ranged
+        charge = (unit.activated and self.last_move not in self._get_neighbors(pos)) and not ranged
         adj_enemy = False
         adj_ally = False
         for n in self._get_neighbors(pos):
@@ -94,6 +96,7 @@ class Game:
         killed = not target.unit_size or not target.morale
         target_id, is_h = self._index_of_unit_at(pos)
         unit.activated = True
+        self.last_move = None
         return d, c, killed, idx, target_id
 
     def pass_round(self):
