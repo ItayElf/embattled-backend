@@ -87,11 +87,12 @@ class Unit:
                 raise ValueError("Unit is out of ammunition")
 
         attack_skill = self.ranged_attack if args.ranged else self.melee_attack
-        ratio = min((1.25, attack_skill / other.defense))
-        hits = math.ceil(ratio * self.unit_size)
-        hits = max(1, hits)  # no less than one hit, no more hits than the unit size
+        diff = attack_skill - other.defense
+        ratio = max((84 + diff * abs(diff)) / 100, .25)
+        hits = round(ratio * self.unit_size)
+        hits = max(1, hits)  # no less than one hit
         damage = self.ranged_damage if args.ranged else self.melee_damage
-        total = ((damage * damage) / (2 * other.armor)) * hits * self.get_modifiers_for_attack(other, args)
+        total = (max(damage * (100 - other.armor * 2) / 100, 1)) * hits * self.get_modifiers_for_attack(other, args)
         return total
 
     def attack(self, other: Unit, args: AttackArguments):
