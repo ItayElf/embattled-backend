@@ -119,5 +119,5 @@ class Unit:
         return int(self.cost * (self.unit_size / self.unit_size_max))
 
     @staticmethod
-    def get_position_as_string(x: int, y: int):
-        return f"{chr(65 + x)}{y + 1}"
+    def get_position_as_string(x: int, y: int, board_size: int):
+        return f"{chr(65 + x)}{board_size - y}"

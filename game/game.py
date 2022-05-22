@@ -72,7 +72,7 @@ class Game:
             raise ValueError("Out of range")
         target, host = self._unit_at(pos)
         if not target or host == is_host:
-            raise ValueError(f"No valid target at {Unit.get_position_as_string(*pos)}")
+            raise ValueError(f"No valid target at {Unit.get_position_as_string(*pos, self.mode.board_size)}")
         ranged = pos in positions["range"]
         charge = (unit.activated and self.last_move[0] not in self._get_neighbors(pos)) and not ranged
         adj_enemy = False

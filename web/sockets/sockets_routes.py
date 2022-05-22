@@ -41,7 +41,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                     json.dumps(
                         {
                             "type": "log",
-                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0]) if game_obj.last_move[0] in game_obj.host_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos) if pos in game_obj.host_visible else '??'}</strong>."
+                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0], game_obj.mode.board_size) if game_obj.last_move[0] in game_obj.host_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos, game_obj.mode.board_size) if pos in game_obj.host_visible else '??'}</strong>."
                         }
                     )
                 )
@@ -51,7 +51,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                     json.dumps(
                         {
                             "type": "log",
-                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0]) if game_obj.last_move[0] in game_obj.joiner_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos) if pos in game_obj.joiner_visible else '??'}</strong>."
+                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0], game_obj.mode.board_size) if game_obj.last_move[0] in game_obj.joiner_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos, game_obj.mode.board_size) if pos in game_obj.joiner_visible else '??'}</strong>."
                         }
                     )
                 )
