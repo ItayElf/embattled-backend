@@ -9,3 +9,4 @@ class Map(db.Model):
 # g - grass
 # w - water
 # r - rock
+# f - forest

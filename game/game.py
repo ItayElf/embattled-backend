@@ -43,7 +43,7 @@ class Game:
             if u and is_host != host:
                 speed = unit.speed / 2
                 break
-        return list(set(p[0] for p in self._get_possible_moves(host, speed, unit.position, set())))
+        return list(set(p[0] for p in self._get_possible_moves(host, speed, unit.position, unit, set())))
 
     def get_attacking_squares(self, host: bool, idx: int):
         unit = self.host.army[idx] if host else self.joiner.army[idx]
@@ -91,6 +91,10 @@ class Game:
             adv -= 1
         if self._tile_at(pos) == "w":
             adv += 1
+        if self._tile_at(pos) == "f" and ranged:
+            adv -= 1
+        if self._tile_at(unit.position) == "f" and ranged:
+            adv -= 1
         args = AttackArguments(ranged, flank, charge, adv)
         d, c = unit.attack(target, args)
         killed = not target.unit_size or not target.morale
@@ -140,35 +144,36 @@ class Game:
         self.turn_counter += 1
         self.is_host_turn = True
 
-    def _get_possible_moves(self, host: bool, speed: float, pos: position, moves: set[tuple[position, float]]) -> set[
+    def _get_possible_moves(self, host: bool, speed: float, pos: position, unit: Unit,
+                            moves: set[tuple[position, float]]) -> set[
         tuple[position, float]]:
         if (pos, speed) in moves:
             return moves
         for n in self._get_neighbors(pos):
-            cost = self._get_cost_to_move(pos, n, host)
+            cost = self._get_cost_to_move(pos, n, host, unit)
             if cost > speed:
                 continue
-            self._get_possible_moves(host, speed - cost, n, moves)
+            self._get_possible_moves(host, speed - cost, n, unit, moves)
             unit_at, is_host = self._unit_at(n)
             if not unit_at:
                 moves.add((n, speed - cost))
         return moves
 
     def _get_visible_squares(self, host: bool) -> set[position]:
-        def _inner(visibility: float, pos: position, squares: set[tuple[position, float]]):
+        def _inner(visibility: float, pos: position, unit: Unit, squares: set[tuple[position, float]]):
             if (pos, visibility) in squares:
                 return squares
             for n in self._get_neighbors(pos):
-                cost = 1.5 if pos[0] != n[0] and pos[1] != n[1] else 1
+                cost = self._get_cost_to_see(pos, n, unit)
                 if cost > visibility:
                     continue
-                _inner(visibility - cost, n, squares)
+                _inner(visibility - cost, n, unit, squares)
                 squares.add((n, visibility - cost))
             return squares
 
         s = set()
         for u in (self.host if host else self.joiner).army.values():
-            _inner(u.visibility, u.position, s)
+            _inner(u.visibility, u.position, u, s)
         return set(v[0] for v in s)
 
     def _get_attacking_squares(self, host: bool, distance: float, pos: position, squares: set[tuple[position, float]]):
@@ -189,10 +194,12 @@ class Game:
             cost *= float("inf")
         return cost  # TODO: handle rocks blocking view
 
-    def _get_cost_to_move(self, start: position, end: position, host: bool) -> float:
+    def _get_cost_to_move(self, start: position, end: position, host: bool, unit: Unit) -> float:
         cost = 1.5 if start[0] != end[0] and start[1] != end[1] else 1
         tile = self._tile_at(end)
         if tile == "w":
+            cost *= 2
+        elif tile == "f" and unit.has_keyword("Mounted"):
             cost *= 2
         elif tile == "r":
             cost *= float("inf")
@@ -200,6 +207,13 @@ class Game:
         if unit and is_host != host:
             cost *= float("inf")
         return cost  # TODO: prevent movement between two diagonal enemies
+
+    def _get_cost_to_see(self, start: position, end: position, unit: Unit):
+        cost = 1.5 if start[0] != end[0] and start[1] != end[1] else 1
+        tile = self._tile_at(end)
+        if tile == "f" and not unit.has_attribute("Alert"):
+            cost *= 2
+        return cost
 
     def _unit_at(self, pos: position):
         for u in self.host.army.values():

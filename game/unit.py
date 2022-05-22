@@ -58,6 +58,9 @@ class Unit:
     def has_attribute(self, attr: str):
         return any([a.name.lower() == attr.lower() for a in self.attributes])
 
+    def has_keyword(self, keyword: str):
+        return any([k.lower() == keyword.lower() for k in self.keywords])
+
     def get_modifiers_for_attack(self, other: Unit, args: AttackArguments):
         """Returns the modifier of the damage an attack should have"""
         m = 1

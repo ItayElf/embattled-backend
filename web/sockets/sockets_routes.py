@@ -1,4 +1,5 @@
 import json
+import random
 
 import jwt
 import simple_websocket
@@ -105,7 +106,8 @@ def _prepare(ws, game):
         a, f = army.units_to_dict()
         p = Player(user.name, user.rating, a, f)
         mp = Map.query.filter_by(board_size=m.board_size).order_by(func.random()).first()
-        g = Game(p, None, ws, None, m, mp.tiles)
+        tiles = mp.tiles[::random.choice([-1, 1])]
+        g = Game(p, None, ws, None, m, tiles)
         games[game] = g
         games[game].update_visibility(True)
     else:
