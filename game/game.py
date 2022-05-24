@@ -74,19 +74,22 @@ class Game:
         if not target or host == is_host:
             raise ValueError(f"No valid target at {Unit.get_position_as_string(*pos, self.mode.board_size)}")
         ranged = pos in positions["range"]
-        charge = (unit.activated and self.last_move[0] not in self._get_neighbors(pos)) and not ranged
+        charge = (unit.activated and self.last_move and self.last_move[0] not in self._get_neighbors(
+            pos)) and not ranged
         adj_enemy = False
         adj_ally = False
+        adv = 0
         for n in self._get_neighbors(pos):
             u, h = self._unit_at(n)
             if not u:
                 continue
             if h == is_host:
                 adj_ally = True
+                if unit.has_attribute("Great Horde") and u.has_keyword("Horse") and u.has_keyword("Mounted"):
+                    adv = 1
             else:
                 adj_enemy = True
         flank = not ranged and adj_enemy and not adj_ally
-        adv = 0
         if self._tile_at(unit.position) == "w":
             adv -= 1
         if self._tile_at(pos) == "w":
