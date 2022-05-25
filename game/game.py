@@ -90,9 +90,9 @@ class Game:
             else:
                 adj_enemy = True
         flank = not ranged and adj_enemy and not adj_ally
-        if self._tile_at(unit.position) == "w":
+        if self._tile_at(unit.position) == "w" and not unit.has_attribute("Seafarers"):
             adv -= 1
-        if self._tile_at(pos) == "w":
+        if self._tile_at(pos) == "w" and not target.has_attribute("Seafarers"):
             adv += 1
         if self._tile_at(pos) == "f" and ranged:
             adv -= 1
@@ -148,8 +148,7 @@ class Game:
         self.is_host_turn = True
 
     def _get_possible_moves(self, host: bool, speed: float, pos: position, unit: Unit,
-                            moves: set[tuple[position, float]]) -> set[
-        tuple[position, float]]:
+                            moves: set[tuple[position, float]]) -> set[tuple[position, float]]:
         if (pos, speed) in moves:
             return moves
         for n in self._get_neighbors(pos):
@@ -200,7 +199,7 @@ class Game:
     def _get_cost_to_move(self, start: position, end: position, host: bool, unit: Unit) -> float:
         cost = 1.5 if start[0] != end[0] and start[1] != end[1] else 1
         tile = self._tile_at(end)
-        if tile == "w":
+        if tile == "w" and not unit.has_attribute("Seafarers"):
             cost *= 2
         elif tile == "f" and unit.has_keyword("Mounted"):
             cost *= 2

@@ -41,7 +41,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                     json.dumps(
                         {
                             "type": "log",
-                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0], game_obj.mode.board_size) if game_obj.last_move[0] in game_obj.host_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos, game_obj.mode.board_size) if pos in game_obj.host_visible else '??'}</strong>."
+                            "content": f"{game_obj.current_player.name}'s <strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0], game_obj.mode.board_size) if game_obj.last_move[0] in game_obj.host_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos, game_obj.mode.board_size) if pos in game_obj.host_visible else '??'}</strong>."
                         }
                     )
                 )
@@ -51,7 +51,7 @@ def sockets_game(ws: simple_websocket.Server, game):
                     json.dumps(
                         {
                             "type": "log",
-                            "content": f"<strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0], game_obj.mode.board_size) if game_obj.last_move[0] in game_obj.joiner_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos, game_obj.mode.board_size) if pos in game_obj.joiner_visible else '??'}</strong>."
+                            "content": f"{game_obj.current_player.name}'s <strong>{unit.name} (#{i})</strong> moved from <strong>{Unit.get_position_as_string(*game_obj.last_move[0], game_obj.mode.board_size) if game_obj.last_move[0] in game_obj.joiner_visible else '??'}</strong> to <strong>{Unit.get_position_as_string(*pos, game_obj.mode.board_size) if pos in game_obj.joiner_visible else '??'}</strong>."
                         }
                     )
                 )
@@ -84,7 +84,8 @@ def sockets_game(ws: simple_websocket.Server, game):
             i = msg["id"]
             if i != -1:
                 game_obj.current_player.army[i].activated = True
-                _log(game_obj, f"<strong>{game_obj.current_player.army[i].name} (#{i})</strong> halted.")
+                _log(game_obj,
+                     f"{game_obj.current_player.name}'s <strong>{game_obj.current_player.army[i].name} (#{i})</strong> halted.")
             if _pass_turn(game_obj, game):
                 ...
             _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
