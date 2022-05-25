@@ -213,8 +213,11 @@ class Game:
     def _get_cost_to_see(self, start: position, end: position, unit: Unit):
         cost = 1.5 if start[0] != end[0] and start[1] != end[1] else 1
         tile = self._tile_at(end)
-        if tile == "f" and not unit.has_attribute("Alert"):
-            cost *= 2
+        if tile == "f":
+            if unit.has_attribute("Alert"):
+                cost *= 1.5
+            else:
+                cost *= 2
         return cost
 
     def _unit_at(self, pos: position):

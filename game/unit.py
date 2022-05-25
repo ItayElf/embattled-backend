@@ -52,7 +52,7 @@ class Unit:
     @property
     def visibility(self):
         if self.has_attribute("Alert"):
-            return 8
+            return 7
         return 6
 
     def has_attribute(self, attr: str):
