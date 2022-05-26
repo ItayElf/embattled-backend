@@ -104,7 +104,7 @@ class Game:
         target_id, is_h = self._index_of_unit_at(pos)
         unit.activated = True
         self.last_move = None
-        return d, c, killed, idx, target_id
+        return d, c, killed, idx, target_id, charge
 
     def pass_round(self):
         self.moved_unit = None

@@ -63,17 +63,18 @@ def sockets_game(ws: simple_websocket.Server, game):
             i = msg["id"]
             pos = tuple(msg["pos"])
             try:
-                damage, casualties, killed, idx, target_idx = game_obj.attack(pos, i, is_host)
+                damage, casualties, killed, idx, target_idx, charge = game_obj.attack(pos, i, is_host)
                 pname = game_obj.host.name if is_host else game_obj.joiner.name
                 attacker = game_obj.host.army[idx] if is_host else game_obj.joiner.army[idx]
                 defender = game_obj.joiner.army[target_idx] if is_host else game_obj.host.army[target_idx]
                 _log(
                     game_obj,
-                    f"<strong>{pname}</strong> attacked <strong>{defender.name} (#{target_idx})</strong> with <strong>{attacker.name} (#{idx})</strong>, resulting in <strong>{casualties} casualties</strong> ({damage} damage){', <strong>killing the unit</strong>' if killed else ''}."
+                    f"<strong>{pname}</strong> {'charged at' if charge else 'attacked'} <strong>{defender.name} (#{target_idx})</strong> with <strong>{attacker.name} (#{idx})</strong>, resulting in <strong>{casualties} casualties</strong> ({damage} damage){', <strong>killing the unit</strong>' if killed else ''}."
                 )
                 if killed:
                     army = game_obj.host.army if not is_host else game_obj.joiner.army
                     del army[target_idx]
+                game_obj.update_visibility()
                 if _pass_turn(game_obj, game):
                     ...
                 _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
