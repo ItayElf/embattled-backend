@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 from game.unit import Unit
 from web import Mode, UnitData
@@ -8,6 +8,9 @@ from web import Mode, UnitData
 class SimpleUnit:
     position: list[int, int]
     name: str
+    faction: str
+    cost: int
+    clas: str
 
 
 @dataclass
@@ -18,7 +21,22 @@ class Army:
 
     @classmethod
     def from_json(cls, json: dict[str, ...]):
-        return cls(json["name"], json["mode"]["id"], [SimpleUnit(u["position"], u["name"]) for u in json["units"]])
+        return cls(json["name"], json["mode"]["id"],
+                   [SimpleUnit(u["position"], u["name"], u["faction"], u["cost"], u["clas"]) for u in json["units"]])
+
+    @classmethod
+    def from_export(cls, export: str):
+        lines = [l for l in export.split("\n") if l]
+        army_name = lines[0]
+        mn, mp = lines[1].split("|")
+        m = Mode.query.filter_by(name=mn, points=int(mp)).first()
+        lines = lines[2:]
+        units = []
+        for name, pos in [l.split("|") for l in lines]:
+            u = UnitData.query.filter_by(name=name).first()
+            x, y = ord(pos[0]) - 65, int(pos[1:])
+            units.append(SimpleUnit([x, y], name, u.faction, u.cost, u.clas))
+        return cls(army_name, m.id, units)
 
     def validate(self, mode: Mode):
         lst = []
@@ -63,3 +81,12 @@ class Army:
             d[i + 1].position = tuple(unit.position)
         faction = list(factions)[0] if len(factions) > 0 else "Mercenaries"
         return d, faction
+
+    @property
+    def as_export(self):
+        m = Mode.query.filter_by(id=self.mode_id).first()
+        return {
+            "name": self.name,
+            "mode": m.serialized,
+            "units": [asdict(u) for u in self.units]
+        }

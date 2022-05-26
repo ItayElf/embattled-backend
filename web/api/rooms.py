@@ -31,6 +31,14 @@ def rooms_validate_army():
     return res
 
 
+@app.route("/api/rooms/import_army", methods=["POST"])
+def rooms_import_army():
+    army = request.json.get("army", None)
+    if not army:
+        return "Missing parameters", 400
+    return jsonify(Army.from_export(army).as_export)
+
+
 @app.route("/api/rooms/host", methods=["POST"])
 @jwt_required()
 def rooms_host():
