@@ -35,6 +35,10 @@ class Unit:
     position: tuple[int, int]  # position from top left corner
     activated: bool
 
+    def __post_init__(self):
+        self.attributes = sorted(self.attributes, key=lambda x: x.name)
+        self.keywords = sorted(self.keywords)
+
     @classmethod
     def from_data(cls, unit_data: UnitData):
         """Returns a unit object from datasheet"""
@@ -68,6 +72,8 @@ class Unit:
             m *= 1.25
         if args.charge and not (other.has_attribute("Polearm") and not args.flank):
             m *= (1 + self.charge_bonus / 100)
+        if args.ranged and self.has_attribute("Shielded"):
+            m /= 1.25
         power = -1 if args.advantage < 0 else 1 if args.advantage > 0 else 0
         m *= (1 + 0.25 * abs(min(args.advantage, 4))) ** power
         return m
@@ -109,7 +115,7 @@ class Unit:
 
         if other.unit_size:
             morale_modifier = self.get_morale_modifier(other, args)
-            ratio = casualties / starting_size + 0.5
+            ratio = casualties / starting_size + 1
             other.morale -= casualties * ratio * morale_modifier
             other.morale = max(math.ceil(other.morale), 0)
         return damage, casualties

@@ -23,7 +23,8 @@ def sockets_game(ws: simple_websocket.Server, game):
         msg = json.loads(ws.receive())
         print(f"{msg=}")
         if msg["type"] == "move_request":
-            _send(ws, "move", json.dumps(game_obj.get_possible_moves(is_host, msg["id"])))
+            _send(ws, "move", json.dumps({"id": msg["id"], "squares": game_obj.get_possible_moves(is_host, msg["id"])}))
+            game_obj.move_after_attack = False
         elif msg["type"] == "attack_request":
             _send(ws, "attack", json.dumps(game_obj.get_attacking_squares(is_host, msg["id"])))
         elif msg["type"] == "move_action":
@@ -56,6 +57,8 @@ def sockets_game(ws: simple_websocket.Server, game):
                     )
                 )
                 game_obj.update_visibility()
+                if game_obj.move_after_attack:
+                    _pass_turn(game_obj, game)
                 _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
             else:
                 _send(ws, "error", "Illegal Move")
@@ -75,9 +78,16 @@ def sockets_game(ws: simple_websocket.Server, game):
                     army = game_obj.host.army if not is_host else game_obj.joiner.army
                     del army[target_idx]
                 game_obj.update_visibility()
-                if _pass_turn(game_obj, game):
-                    ...
-                _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
+                if attacker.has_attribute("Chargers"):
+                    _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
+                    game_obj.move_after_attack = True
+                    ws = game_obj.host_ws if is_host else game_obj.joiner_ws
+                    _send(ws, "move", json.dumps({"id": msg["id"],
+                                                  "squares": game_obj.get_possible_moves(is_host, i,
+                                                                                         attacker.speed / 2 if killed else attacker.speed)}))
+                else:
+                    _pass_turn(game_obj, game)
+                    _broadcast(game_obj, "game_data", json.dumps(game_obj.as_dict))
             except ValueError as e:
                 print("ERROR: " + str(e))
                 _send(ws, "error", str(e))

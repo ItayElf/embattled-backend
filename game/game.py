@@ -25,6 +25,7 @@ class Game:
     ended: bool = field(init=False)
     host_visible: set[position] = field(init=False)
     joiner_visible: set[position] = field(init=False)
+    move_after_attack: bool = field(init=False, default=False)
 
     def __post_init__(self):
         self.is_host_turn = True
@@ -35,9 +36,9 @@ class Game:
         self.host_visible = set()
         self.joiner_visible = set()
 
-    def get_possible_moves(self, host: bool, idx: int) -> list[position]:
+    def get_possible_moves(self, host: bool, idx: int, speed: float | None = None) -> list[position]:
         unit = self.host.army[idx] if host else self.joiner.army[idx]
-        speed = unit.speed
+        speed = speed if speed else unit.speed
         for n in self._get_neighbors(unit.position):
             u, is_host = self._unit_at(n)
             if u and is_host != host:
@@ -95,7 +96,7 @@ class Game:
         if self._tile_at(pos) == "w" and not target.has_attribute("Seafarers"):
             adv += 1
         if self._tile_at(pos) == "f" and ranged:
-            adv -= 1
+            adv -= int(not unit.has_attribute("Forestborns"))
         if self._tile_at(unit.position) == "f" and ranged:
             adv -= 1
         args = AttackArguments(ranged, flank, charge, adv)
