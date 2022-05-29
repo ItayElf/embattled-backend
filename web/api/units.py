@@ -10,7 +10,7 @@ from web.base import app
 
 @app.route("/api/units")
 def units_units():
-    units = UnitData.query.all()
+    units = UnitData.query.order_by(UnitData.name).all()
     return jsonify([u.serialized for u in units])
 
 
@@ -54,15 +54,23 @@ def units_damage_calc():
     defender.unit_size = defender_size
     defender = Unit.from_data(defender)
     d = attacker.calc_damage(defender, args)
+    try:
+        mnt = math.ceil(defender.unit_size / int(d / defender.hitpoints))
+    except ZeroDivisionError:
+        mnt = "∞"
+    try:
+        mxt = math.ceil(defender.unit_size / int(d * 0.85 / defender.hitpoints))
+    except ZeroDivisionError:
+        mxt = "∞"
     return jsonify(
         {
-            "max_damage": d,
-            "min_damage": d * 0.85,
-            "avg_damage": d * 0.925,
+            "max_damage": round(d, 2),
+            "min_damage": round(d * 0.85, 2),
+            "avg_damage": round(d * 0.925, 2),
             "max_casualties": int(d / defender.hitpoints),
             "min_casualties": int(d * 0.85 / defender.hitpoints),
             "avg_casualties": int(d * 0.925 / defender.hitpoints),
-            "min_turns_to_kill": math.ceil(defender.unit_size / int(d / defender.hitpoints)),
-            "max_turns_to_kill": math.ceil(defender.unit_size / int(d * 0.85 / defender.hitpoints))
+            "min_turns_to_kill": mnt,
+            "max_turns_to_kill": mxt
         }
     )
