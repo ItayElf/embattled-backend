@@ -36,7 +36,11 @@ def rooms_import_army():
     army = request.json.get("army", None)
     if not army:
         return "Missing parameters", 400
-    return jsonify(Army.from_export(army).as_export)
+    try:
+        a = Army.from_export(army).as_export
+        return jsonify(a)
+    except ValueError as e:
+        return str(e), 400
 
 
 @app.route("/api/rooms/host", methods=["POST"])

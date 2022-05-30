@@ -28,12 +28,16 @@ class Army:
     def from_export(cls, export: str):
         lines = [l for l in export.split("\n") if l]
         army_name = lines[0]
-        mn, mp = lines[1].split("|")
-        m = Mode.query.filter_by(name=mn, points=int(mp)).first()
+        mn, mp, ms = lines[1].split("|")
+        m = Mode.query.filter_by(name=mn, points=int(mp), board_size=ms).first()
+        if not m:
+            raise ValueError(f"No mode with name {mn}, {mp} points and board size {ms} was found")
         lines = lines[2:]
         units = []
         for name, pos in [l.split("|") for l in lines]:
             u = UnitData.query.filter_by(name=name).first()
+            if not u:
+                raise ValueError(f"No unit named {name} was found")
             x, y = ord(pos[0]) - 65, int(pos[1:])
             units.append(SimpleUnit([x, y], name, u.faction, u.cost, u.clas))
         return cls(army_name, m.id, units)
